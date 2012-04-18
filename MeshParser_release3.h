@@ -19,9 +19,26 @@ using namespace std;
 #define HEIGHT 400
 #define SCALEFACTOR 13.122
 
+// A single vertex (this should replace Vector3)
+typedef struct Vertex {
+    float x;
+    float y;
+    float z;
+    
+    float R;
+    float G;
+    float B;
+} vertex; 
+
+// A single triangle (this should replace Triangle)
+typedef struct Triangle2 {
+   int v1;
+   int v2;
+   int v3;
+} Triangle2;
+
 //very simple data structure to store 3d points
-typedef struct Vector3
-{
+typedef struct Vector3 {
     float x;
     float y;
     float z;
@@ -34,8 +51,7 @@ typedef struct Vector3
     Vector3() {}
 } Vector3;
 
-typedef struct BoundingBox
-{
+typedef struct BoundingBox {
   float top;
   float left;
   float width;
@@ -46,8 +62,7 @@ typedef struct BoundingBox
 
 } BoundingBox;
 
-typedef struct Vector2
-{
+typedef struct Vector2 {
     float x;
     float y;
     float z_depth;
@@ -55,8 +70,7 @@ typedef struct Vector2
     Vector2() {}
 } Vector2;
 
-typedef struct Triangle2d
-{
+typedef struct Triangle2d {
     Vector2 v1;
     Vector2 v2;
     Vector2 v3;
@@ -65,8 +79,7 @@ typedef struct Triangle2d
 
 //data structure to store triangle -
 //note that v1, v2, and v3 are indexes into the vertex array
-typedef struct Tri
-{
+typedef struct Tri {
     int v1;
     int v2;
     int v3;

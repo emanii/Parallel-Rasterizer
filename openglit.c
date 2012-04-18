@@ -83,8 +83,6 @@ extern vector<Tri*> Triangles;
 extern vector<Vector3 *> Vertices;
 extern Vector3 center;
 
-using namespace std;
-
 double angle = 0;
 typedef struct 
 {
