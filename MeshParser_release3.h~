@@ -15,8 +15,8 @@ using namespace std;
 
 #define FLT_MIN 1.1754E-38F
 #define FLT_MAX 1.1754E+38F
-#define WIDTH 400
-#define HEIGHT 400
+#define WIDTH 2000
+#define HEIGHT 2000
 #define SCALEFACTOR 10
 #define TRIANGLES 10000
 

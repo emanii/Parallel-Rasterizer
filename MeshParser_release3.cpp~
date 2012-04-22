@@ -1,7 +1,5 @@
 #include "MeshParser_release3.h"
 
-void calculateBoundingBox(Tri *Tiangles);
-
 //open the file for reading
 void ReadFile(char* filename)
 {
@@ -150,8 +148,6 @@ void readLine(char* str) {
       Triangles[counter].G3 = Vertices[v3 - 1]->G;
       Triangles[counter].B3 = Vertices[v3 - 1]->B;
 
-
-      calculateBoundingBox(&Triangles[counter]);
       counter++;
 
    }
@@ -173,22 +169,23 @@ Vector3 convertPointTo2d(Vector3 vertex, Vector3 camera) {
 }
 
 	
-void calculateBoundingBox(Tri *Trian) {
-      Vector3 vect1 = convertPointTo2d(Vector3((*Trian).x1, (*Trian).y1, (*Trian).z1), 
+void calculateBoundingBox() {
+   for(int i = 0; i < TRIANGLES; i++) {
+      Vector3 vect1 = convertPointTo2d(Vector3(Triangles[i].x1, Triangles[i].y1, Triangles[i].z1), 
             Vector3(-0.2,1,0));
-      Vector3 vect2 = convertPointTo2d(Vector3((*Trian).x2, (*Trian).y2, (*Trian).z2), 
+      Vector3 vect2 = convertPointTo2d(Vector3(Triangles[i].x2, Triangles[i].y2, Triangles[i].z2), 
             Vector3(-0.2,1,0));
-      Vector3 vect3 = convertPointTo2d(Vector3((*Trian).x3, (*Trian).y3, (*Trian).z3), 
+      Vector3 vect3 = convertPointTo2d(Vector3(Triangles[i].x3, Triangles[i].y3, Triangles[i].z3), 
             Vector3(-0.2,1,0));
 
-      (*Trian).x1_2d = vect1.x;
-      (*Trian).y1_2d = vect1.y;
+      Triangles[i].x1_2d = vect1.x;
+      Triangles[i].y1_2d = vect1.y;
 
-      (*Trian).x2_2d = vect2.x;
-      (*Trian).y2_2d = vect2.y;
+      Triangles[i].x2_2d = vect2.x;
+      Triangles[i].y2_2d = vect2.y;
 
-      (*Trian).x3_2d = vect3.x;
-      (*Trian).y3_2d = vect3.y;
+      Triangles[i].x3_2d = vect3.x;
+      Triangles[i].y3_2d = vect3.y;
 
 
       float min_x = vect1.x < vect2.x ? vect1.x : vect2.x;
@@ -203,14 +200,15 @@ void calculateBoundingBox(Tri *Trian) {
       float max_y = vect1.y > vect2.y ? vect1.y : vect2.y;
       max_y = max_y > vect3.y ? max_y : vect3.y;
 
-      (*Trian).bboxLeft = (int)min_x;
-      (*Trian).bboxTop = (int)min_y;
-      (*Trian).bboxWidth = (int)(max_x - min_x);
-      (*Trian).bboxHeight = (int)(max_y - min_y);
+      Triangles[i].bboxLeft = (int)min_x;
+      Triangles[i].bboxTop = (int)min_y;
+      Triangles[i].bboxWidth = (int)(max_x - min_x);
+      Triangles[i].bboxHeight = (int)(max_y - min_y);
+   }
 }
 
 Vector3 normalize(Vector3* vt) {
-   float sizeit = vt->x * vt->x + vt->y * vt->y + vt->z * vt->z;
+   float sizeit = vt->x * vt->x + vt->y * vt->y + vt->y * vt->y;
    sizeit = sqrt(sizeit);
    return (Vector3(vt->x / sizeit, vt->y/sizeit, vt->z/sizeit));
 }
@@ -307,7 +305,7 @@ void calculateBarycentric(int xAlign, int yAlign) {
    } // for each triangle
 }
 
-void Parse(int type) {
+void Parse() {
 
    char str[] = "bunny10k.m";
 
@@ -318,11 +316,11 @@ void Parse(int type) {
       for(int j = 0; j < HEIGHT; j++)
          z_buffer[i][j] = 10000000;
 
-   if(type == 0)
-   {
-      printf("Rasterization\n");
-      for(int i = 0; i < 5; i++)
-         for(int j = 0; j < 5; j++)
-            calculateBarycentric(i,j);
-   }
+   printf("Caclulating Bounding Box\n");
+   calculateBoundingBox();
+
+   printf("Rasterization\n");
+   for(int i = 0; i < 5; i++)
+      for(int j = 0; j < 5; j++)
+         calculateBarycentric(i,j);
 }

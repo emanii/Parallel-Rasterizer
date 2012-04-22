@@ -20,7 +20,7 @@ extern float image[WIDTH][HEIGHT][3];
 GLfloat light_diffuse[] = {0.5, 0.5, 0.5, 1.0};  /* Red diffuse light. */
 GLfloat light_position[] = {-0.2, 1.0, -1, 0.0};  /* Infinite light location. */
 
-
+__constant__ Tri Triangles[TRIANGLES];
 
 typedef struct Tri
 {
@@ -45,7 +45,7 @@ extern void Parse();
 extern Tri Triangles[TRIANGLES];
 
 float *z_buffer;
-__constant__ Tri Triangles[TRIANGLES];
+__constant__ Tri cudaTri[TRIANGLES];
 
 void imageWrite()
 {
