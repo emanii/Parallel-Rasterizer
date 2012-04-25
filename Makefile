@@ -1,4 +1,4 @@
-NVFLAGS=-g -arch=compute_20 -code=sm_20 -DGL_GLEXT_PROTOTYPES -lglut -lGL -lGLU
+NVFLAGS=-g -pg -arch=compute_20 -code=sm_20 -DGL_GLEXT_PROTOTYPES -lglut -lGL -lGLU
 # list .c and .cu source files here
 SRCFILES=openglit.cu MeshParser_release3.cpp 
 

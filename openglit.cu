@@ -49,6 +49,7 @@ extern Tri Triangles[TRIANGLES];
 Tri *cudaTri;
 float *Depthbuffer;
 float *img;
+int *TriIndex;
 
 void imageWrite()
 {
@@ -116,7 +117,7 @@ void imageWrite()
   fclose(f);
 }
 
-__device__ float computeColor(float x, float y, float z, float diffuseColor) {
+__forceinline__ __device__ float computeColor(float x, float y, float z, float diffuseColor) {
    //Color of light
    float lightPosX = 3;
    float lightPosY = 15.0;
@@ -141,19 +142,24 @@ __device__ float computeColor(float x, float y, float z, float diffuseColor) {
    return color;
 }
 
-__global__ void Rasterizer(Tri *cudaTri, float *img, float *Depthbuffer, int xAlign, int yAlign)
+
+
+__global__ void Rasterizer(Tri *cudaTri, float *img, float *Depthbuffer, int triCounter)
 {
-   int i = blockIdx.x * 250 + threadIdx.x;
-   printf("%d\n", i);
-      float xa = cudaTri[i].x1_2d;
-      float xb = cudaTri[i].x2_2d;
-      float xc = cudaTri[i].x3_2d;
+     int i = blockIdx.x * 512 + threadIdx.x;
 
-      float ya = cudaTri[i].y1_2d;
-      float yb = cudaTri[i].y2_2d; 
-      float yc = cudaTri[i].y3_2d;
+     if(i > triCounter)
+	return;
+   
+     float xa = cudaTri[i].x1_2d;
+     float xb = cudaTri[i].x2_2d;
+     float xc = cudaTri[i].x3_2d;
+				
+     float ya = cudaTri[i].y1_2d;
+     float yb = cudaTri[i].y2_2d; 
+     float yc = cudaTri[i].y3_2d;
 
-      for(int j = cudaTri[i].bboxLeft; 
+     for(int j = cudaTri[i].bboxLeft; 
           j <= cudaTri[i].bboxLeft + cudaTri[i].bboxWidth; 
           ++j) {
          for(int k = cudaTri[i].bboxTop; 
@@ -176,7 +182,7 @@ __global__ void Rasterizer(Tri *cudaTri, float *img, float *Depthbuffer, int xAl
                // 1 is camera z position
                float distancefromeye = 1 - depthP;
 
-               if(distancefromeye <= Depthbuffer[j * HEIGHT + k]) {
+               if(distancefromeye <= Depthbuffer[(j * HEIGHT) + k]) {
                   float R = 
                         computeColor(cudaTri[i].x1, cudaTri[i].y1, cudaTri[i].z1, cudaTri[i].R1) * alpha + 
                         computeColor(cudaTri[i].x2, cudaTri[i].y2, cudaTri[i].z2, cudaTri[i].R2) * beta + 
@@ -192,31 +198,58 @@ __global__ void Rasterizer(Tri *cudaTri, float *img, float *Depthbuffer, int xAl
                         computeColor(cudaTri[i].x2, cudaTri[i].y2, cudaTri[i].z2, cudaTri[i].B2) * beta + 
                         computeColor(cudaTri[i].x3, cudaTri[i].y3, cudaTri[i].z3, cudaTri[i].B3) * gamma;
 
-                  img[j + (xAlign*BUNNYWIDTH) + k + (yAlign*BUNNYWIDTH)] = R;
-                  img[j + (xAlign*BUNNYWIDTH) + k + (yAlign*BUNNYWIDTH) + (WIDTH * HEIGHT)] = G;
-                  img[j + (xAlign*BUNNYWIDTH) + k + (yAlign*BUNNYWIDTH) + 2 * (WIDTH * HEIGHT)] = B;
+              for(int p = 0; p < 5; p++)
+              {
+                 for(int l = 0; l < 5; l++)
+                 {
+                    img[((j + (p*BUNNYWIDTH)) * HEIGHT) + (k + (l*BUNNYHEIGHT))] = R;
+                    img[((j + (p*BUNNYWIDTH)) * HEIGHT) + (k + (l*BUNNYHEIGHT)) + (WIDTH * HEIGHT)] = G;
+                    img[((j + (p*BUNNYWIDTH)) * HEIGHT) + (k + (l*BUNNYHEIGHT)) + 2 * (WIDTH * HEIGHT)] = B;
+                 }
+              }
+
                  
-                  Depthbuffer[j * WIDTH + k] = distancefromeye;
+                  Depthbuffer[(j * HEIGHT) + k] = distancefromeye;
                } 
             }
          }
       }
+
   __syncthreads();    
 }
 
-float img1[WIDTH * HEIGHT * 3];
-int type = 1; // 0 for sequential, 1 for parralelized
+float *img1;
+int type = 0; // 0 for sequential, 1 for parralelized
 
 int main (int argc, char **argv) {
+
   Parse(type);
 
-  cudaMalloc(&cudaTri, TRIANGLES);
-  cudaMalloc(&Depthbuffer, TRIANGLES);
-  cudaMalloc(&img, WIDTH * HEIGHT * 3);
-  cudaMemcpy(cudaTri, Triangles, TRIANGLES, cudaMemcpyHostToDevice);
+  dim3 grid, block;
 
-  Rasterizer<<<80, 250>>>(cudaTri, img, Depthbuffer, 0, 0); 
-  cudaMemcpy(img, img1, TRIANGLES, cudaMemcpyDeviceToHost);
+  grid.x = (TRIANGLES / 512) + (TRIANGLES % 512 ? 1 : 0);
+  block.x = 512;
+  
+  img1 = (float*)malloc(sizeof(float) * WIDTH * HEIGHT * 3);
+
+  int counter = TRIANGLES;
+  
+  float* zDepth;
+  zDepth = (float*)malloc(sizeof(float) * WIDTH * HEIGHT);
+   for(int i = 0; i < WIDTH; i++)
+      for(int j = 0; j < HEIGHT; j++)
+         zDepth[i * WIDTH + j] = 1000000;
+
+  cudaMalloc(&cudaTri, sizeof(Tri) * TRIANGLES);
+  cudaMalloc(&Depthbuffer, sizeof(float) * WIDTH * HEIGHT);
+  cudaMalloc(&img, sizeof(float) * WIDTH * HEIGHT * 3);
+
+  cudaMemcpy(cudaTri, Triangles, sizeof(Tri) * TRIANGLES, cudaMemcpyHostToDevice);
+  cudaMemcpy(Depthbuffer, zDepth, sizeof(float) * WIDTH * HEIGHT , cudaMemcpyHostToDevice);
+  
+  Rasterizer<<<grid, block>>>(cudaTri, img, Depthbuffer, counter); 
+
+  cudaMemcpy(img1, img, sizeof(float) * WIDTH * HEIGHT * 3, cudaMemcpyDeviceToHost);
 
   cudaFree(cudaTri);
   cudaFree(Depthbuffer);

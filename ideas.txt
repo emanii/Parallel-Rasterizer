@@ -1,9 +1,0 @@
-- We want to end up with an array of cuda_tris, where a cuda_tri has three
-   coordinates and three colors. So, Vector3 has to be slimmed down, and so
-   does Triangle.
-
-- BoundingBox has to go. Each Triangle won't know what its bounding box is by
-   the time it gets to the GPU. Therefore, it'll have to calculate its
-   bounding box *on* the GPU.
-
-

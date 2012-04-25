@@ -296,9 +296,9 @@ void calculateBarycentric(int xAlign, int yAlign) {
                         computeColor(Vector3(Triangles[i].x2, Triangles[i].y2, Triangles[i].z2) , Triangles[i].B2) * beta + 
                         computeColor(Vector3(Triangles[i].x3, Triangles[i].y3, Triangles[i].z3) , Triangles[i].B3) * gamma;
 
-                  image[j + (xAlign*WIDTH)][k + (yAlign*HEIGHT)][0] = R;
-                  image[j + (xAlign*WIDTH)][k + (yAlign*HEIGHT)][1] = G;
-                  image[j + (xAlign*WIDTH)][k + (yAlign*HEIGHT)][2] = B;
+                  image[j + (xAlign*WIDTH)][k + (yAlign*HEIGHT)][0] = (R - 0.9) / 0.5;
+                  image[j + (xAlign*WIDTH)][k + (yAlign*HEIGHT)][1] = (G - 0.9) / 0.5;
+                  image[j + (xAlign*WIDTH)][k + (yAlign*HEIGHT)][2] = (B - 0.9) / 0.5;
                   z_buffer[j][k] = distancefromeye;
                } 
             } 
